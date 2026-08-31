@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Shawilang – Shawibet Writer & Translator</title>
+    <meta name="description" content="Tulis dan konversi Bahasa Indonesia ke Shawilang dan aksara Shawibet dengan mode Ngoko, Kromo, dan Kromo Ngalik.">
+    <link rel="canonical" href="https://wahyudi.github.io/shawilang/">
+    <meta property="og:title" content="Shawilang – Shawibet Writer">
+    <meta property="og:description" content="Konversi Bahasa Indonesia ke Shawilang & Shawibet. Mode Ngoko, Kromo, Kromo Ngalik. PWA.">
+    <meta name="twitter:card" content="summary">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>𐑖</text></svg>">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e3a8a">
+    <style>
+        /* CSS Variables */
+        :root {
+            --bg: #ffffff;
+            --bg-card: #f8fafc;
+            --text: #0f172a;
+            --primary: #1e3a8a;
+            --primary-light: #3b82f6;
+            --accent: #f97316;
+            --border: #cbd5e1;
+            --shadow: 0 4px 12px rgba(0,0,0,0.05);
+            --radius: 12px;
+            --transition: 0.25s ease;
+            --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+        [data-theme="dark"] {
+            --bg: #0f172a;
+            --bg-card: #1e293b;
+            --text: #f1f5f9;
+            --primary: #3b82f6;
+            --primary-light: #60a5fa;
+            --accent: #f97316;
+            --border: #334155;
+            --shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            transition: background var(--transition), color var(--transition);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 0 16px 20px;
+            line-height: 1.5;
+        }
+        /* header */
+        header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0 8px;
+            border-bottom: 2px solid var(--primary);
+            margin-bottom: 20px;
+        }
+        .brand h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            letter-spacing: -0.5px;
+        }
+        .brand small {
+            display: block;
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .theme-toggle {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 40px;
+            padding: 6px 14px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.2s;
+        }
+        .theme-toggle:hover { opacity: 0.8; }
+
+        /* controls */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 16px;
+            background: var(--bg-card);
+            padding: 16px 18px;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+            align-items: center;
+        }
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 6px 12px;
+            flex-wrap: wrap;
+        }
+        .control-group label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+        .btn-group {
+            display: flex;
+            gap: 4px;
+            background: var(--bg);
+            border-radius: 40px;
+            padding: 3px;
+            border: 1px solid var(--border);
+        }
+        .btn-group button {
+            background: transparent;
+            border: none;
+            padding: 4px 14px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--text);
+            transition: 0.15s;
+            white-space: nowrap;
+        }
+        .btn-group button.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 2px 6px rgba(30,58,138,0.3);
+        }
+        .btn-group button:not(.active):hover { background: var(--border); }
+
+        select, .btn-ghost {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text);
+            cursor: pointer;
+        }
+        .btn-ghost {
+            background: var(--bg-card);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .btn-ghost:hover { background: var(--border); }
+
+        /* layout columns */
+        .columns {
+            display: grid;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .col-2 { grid-template-columns: 1fr 1fr; }
+        .col-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            padding: 12px 14px 14px;
+            display: flex;
+            flex-direction: column;
+            transition: background 0.2s;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+            flex-wrap: wrap;
+        }
+        .card-header label {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .card-actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .card-actions button {
+            background: transparent;
+            border: none;
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 20px;
+            cursor: pointer;
+            color: var(--text);
+            opacity: 0.6;
+            transition: 0.15s;
+        }
+        .card-actions button:hover { opacity: 1; background: var(--border); }
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 10px 12px;
+            font-size: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+            color: var(--text);
+            resize: vertical;
+            font-family: var(--font);
+            transition: 0.2s;
+            line-height: 1.6;
+        }
+        textarea:focus { outline: 2px solid var(--primary); outline-offset: 1px; }
+        .char-count {
+            font-size: 0.7rem;
+            opacity: 0.6;
+            margin-top: 4px;
+            text-align: right;
+        }
+        .rtl-text {
+            direction: rtl;
+            unicode-bidi: plaintext;
+        }
+        .footer {
+            margin-top: 24px;
+            text-align: center;
+            font-size: 0.8rem;
+            opacity: 0.6;
+            border-top: 1px solid var(--border);
+            padding-top: 16px;
+        }
+        /* toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary);
+            color: white;
+            padding: 10px 24px;
+            border-radius: 60px;
+            font-weight: 500;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            pointer-events: none;
+            z-index: 999;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* responsive */
+        @media (max-width: 720px) {
+            .col-2, .col-3 { grid-template-columns: 1fr; }
+            .controls { flex-direction: column; align-items: stretch; }
+            .control-group { justify-content: center; }
+            .brand h1 { font-size: 1.5rem; }
+            .btn-group button { font-size: 0.7rem; padding: 4px 10px; }
+        }
+        @media (max-width: 480px) {
+            header { flex-direction: column; align-items: start; gap: 6px; }
+            .header-actions { width: 100%; justify-content: flex-start; }
+        }
+        /* helper */
+        .flex-wrap { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+        .gap-1 { gap: 4px; }
+        .mt-1 { margin-top: 6px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="brand">
+            <h1>SHAWILANG</h1>
+            <small>Shawilang &amp; Shawibet Writer</small>
+        </div>
+        <div class="header-actions">
+            <button class="theme-toggle" id="themeToggle" aria-label="Toggle tema">🌙 Dark</button>
+        </div>
+    </header>
+
+    <!-- controls -->
+    <div class="controls" id="controls">
+        <div class="control-group">
+            <label>Mode</label>
+            <div class="btn-group" id="modeGroup">
+                <button data-mode="latin2shawi" class="active">Latin → Shawibet</button>
+                <button data-mode="shawi2latin">Shawibet → Latin</button>
+            </div>
+        </div>
+        <div class="control-group">
+            <label>Layout</label>
+            <div class="btn-group" id="layoutGroup">
+                <button data-layout="2" class="active">2 Kolom</button>
+                <button data-layout="3">3 Kolom</button>
+            </div>
+        </div>
+        <div class="control-group">
+            <label>Kerumitan</label>
+            <div class="btn-group" id="complexityGroup">
+                <button data-complex="ngoko" class="active">Ngoko</button>
+                <button data-complex="kromo">Kromo</button>
+                <button data-complex="kromo-ngalik">Kromo Ngalik</button>
+            </div>
+        </div>
+        <div class="control-group">
+            <button class="btn-ghost" id="swapBtn">⇄ Tukar</button>
+            <button class="btn-ghost" id="clearBtn">✕ Bersihkan</button>
+        </div>
+    </div>
+
+    <!-- columns container -->
+    <div class="columns col-2" id="columnsContainer">
+        <!-- column 1 : input -->
+        <div class="card" id="col1">
+            <div class="card-header">
+                <label id="labelCol1">Input Latin</label>
+                <div class="card-actions">
+                    <button class="copy-btn" data-target="col1" aria-label="Salin">📋</button>
+                    <span class="char-count" id="countCol1">0</span>
+                </div>
+            </div>
+            <textarea id="inputText" placeholder="Ketik di sini..." spellcheck="true"></textarea>
+        </div>
+        <!-- column 2 : hasil utama -->
+        <div class="card" id="col2">
+            <div class="card-header">
+                <label id="labelCol2">Hasil Shawibet</label>
+                <div class="card-actions">
+                    <button class="copy-btn" data-target="col2" aria-label="Salin">📋</button>
+                    <span class="char-count" id="countCol2">0</span>
+                </div>
+            </div>
+            <textarea id="outputShawibet" readonly placeholder="Hasil aksara"></textarea>
+        </div>
+        <!-- column 3 : shawilang latin (opsional) -->
+        <div class="card hidden" id="col3">
+            <div class="card-header">
+                <label id="labelCol3">Shawilang Latin</label>
+                <div class="card-actions">
+                    <button class="copy-btn" data-target="col3" aria-label="Salin">📋</button>
+                    <span class="char-count" id="countCol3">0</span>
+                </div>
+            </div>
+            <textarea id="outputLatin" readonly placeholder="Hasil Shawilang Latin"></textarea>
+        </div>
+    </div>
+
+    <!-- additional info -->
+    <div style="display:flex; flex-wrap:wrap; gap:12px; justify-content:space-between; align-items:center; margin-top:6px;">
+        <div style="font-size:0.8rem; opacity:0.7;">
+            <span id="modeDesc">Mode: Latin → Shawibet · Ngoko · LTR</span>
+        </div>
+        <button class="btn-ghost" id="convertBtn" style="background:var(--primary); color:white; border:none; padding:8px 24px;">Konversi</button>
+    </div>
+
+    <div class="footer">
+        Developed By Wahyudi © <span id="year"></span>
+    </div>
+
+    <!-- toast -->
+    <div id="toast" class="toast">✓ Berhasil disalin</div>
+
+    <script>
+        (function(){
+            "use strict";
+
+            // ---------- SHAWILANG MAPPING ----------
+            const TOKEN_MAP = new Map([
+                ['ng','ŋ'], ['ny','ɲ'], ['kh','x'], ['sy','ʃ'],
+                ['b','p'], ['c','c'], ['d','t'], ['f','f'], ['g','g'],
+                ['h','h'], ['l','l'], ['r','r'], ['m','m'], ['n','n'],
+                ['p','b'], ['t','d'], ['k','k'], ['v','v'], ['s','s'],
+                ['z','z'], ['j','j'], ['y','y'], ['w','w'],
+                ['a','e'], ['e','a'], ['o','u'], ['u','o'], ['i','i']
+            ]);
+            // Shawibet encode map (dari token hasil transformasi)
+            const SHAWI_MAP = {
+                'p':'𐑐','b':'𐑚','t':'𐑑','d':'𐑛','k':'𐑒','g':'𐑜',
+                'v':'𐑓','f':'𐑝','s':'𐑕','z':'𐑟','c':'𐑗','j':'𐑡',
+                'y':'𐑘','w':'𐑢','ŋ':'𐑙','h':'𐑣','l':'𐑤','r':'𐑮',
+                'm':'𐑥','n':'𐑯','e':'𐑧','a':'𐑪','i':'𐑴','o':'𐑺','u':'𐑻',
+                'q':'𐑷','x':'𐑒𐑕','ʃ':'𐑭','ɲ':'𐑿'
+            };
+            // decode Shawibet → token (inverse)
+            const SHAWI_DECODE = Object.fromEntries(Object.entries(SHAWI_MAP).map(([k,v])=>[v,k]));
+
+            // helper: longest match tokenizer
+            function tokenize(input) {
+                const tokens = [];
+                const special = ['ng','ny','kh','sy'];
+                let i=0;
+                while(i<input.length) {
+                    let match = null;
+                    // cek 2-char
+                    if(i+1<input.length) {
+                        const two = input.substr(i,2).toLowerCase();
+                        if(special.includes(two)) {
+                            match = two;
+                        }
+                    }
+                    if(match) {
+                        tokens.push(match);
+                        i+=2;
+                    } else {
+                        const ch = input[i].toLowerCase();
+                        tokens.push(ch);
+                        i++;
+                    }
+                }
+                return tokens;
+            }
+
+            // transform per kata (token-level)
+            function transformWord(word) {
+                const tokens = tokenize(word);
+                const out = [];
+                for(let t of tokens) {
+                    // coba map utuh (untuk special)
+                    let mapped = TOKEN_MAP.get(t);
+                    if(mapped) { out.push(mapped); continue; }
+                    // coba single char
+                    if(t.length===1) {
+                        const m = TOKEN_MAP.get(t);
+                        out.push(m || t);
+                    } else {
+                        out.push(t); // fallback
+                    }
+                }
+                return out.join('');
+            }
+
+            // pipeline: transform + reverse word + reverse sentence
+            function applyNgoko(text) {
+                return text.split(/\b/).map(part => {
+                    // jika part alfanumerik (hanya huruf/angka) -> transform
+                    if(/^[A-Za-z]+$/.test(part)) return transformWord(part);
+                    return part;
+                }).join('');
+            }
+
+            function applyKromo(text) {
+                return text.split(/\b/).map(part => {
+                    if(/^[A-Za-z]+$/.test(part)) {
+                        const transformed = transformWord(part);
+                        return transformed.split('').reverse().join('');
+                    }
+                    return part;
+                }).join('');
+            }
+
+            function applyKromoNgalik(text) {
+                // 1. per kata transform + reverse karakter
+                const words = text.split(/\s+/);
+                const processed = words.map(w => {
+                    if(/^[A-Za-z]+$/.test(w)) {
+                        const tr = transformWord(w);
+                        return tr.split('').reverse().join('');
+                    }
+                    return w;
+                });
+                // 2. reverse urutan kata, pertahankan tanda baca? sederhana: balik array
+                return processed.reverse().join(' ');
+            }
+
+            // encode ke Shawibet
+            function encodeShawibet(latinText) {
+                let result = '';
+                for(let ch of latinText) {
+                    const lower = ch.toLowerCase();
+                    if(SHAWI_MAP[lower]) {
+                        result += SHAWI_MAP[lower];
+                    } else if(ch === ' ') {
+                        result += ' ';
+                    } else if(/[.,!?;:"'()\-]/.test(ch)) {
+                        result += ch;
+                    } else {
+                        result += ch; // fallback
+                    }
+                }
+                return result;
+            }
+
+            // decode Shawibet → latin (token based)
+            function decodeShawibet(shawiText) {
+                let result = '';
+                let i=0;
+                while(i<shawiText.length) {
+                    const ch = shawiText[i];
+                    // coba 2-char unicode? Shavian multi? kita cek mapping
+                    let found = false;
+                    for(let [code, char] of Object.entries(SHAWI_DECODE)) {
+                        if(shawiText.startsWith(code, i)) {
+                            result += char;
+                            i += code.length;
+                            found = true;
+                            break;
+                        }
+                    }
+                    if(!found) {
+                        // spasi atau tanda baca
+                        if(ch === ' ' || /[.,!?;:"'()\-]/.test(ch)) {
+                            result += ch;
+                        } else {
+                            result += ch; // unknown
+                        }
+                        i++;
+                    }
+                }
+                return result;
+            }
+
+            // ---------- APP STATE ----------
+            const state = {
+                mode: 'latin2shawi', // 'latin2shawi' or 'shawi2latin'
+                layout: 2,
+                complexity: 'ngoko', // 'ngoko','kromo','kromo-ngalik'
+                inputText: 'buku itu baru',
+                outputShawibet: '',
+                outputLatin: '',
+                isRTL: false,
+            };
+
+            // DOM refs
+            const $ = id => document.getElementById(id);
+            const inputText = $('inputText');
+            const outputShawibet = $('outputShawibet');
+            const outputLatin = $('outputLatin');
+            const col1 = $('col1');
+            const col2 = $('col2');
+            const col3 = $('col3');
+            const labelCol1 = $('labelCol1');
+            const labelCol2 = $('labelCol2');
+            const labelCol3 = $('labelCol3');
+            const countCol1 = $('countCol1');
+            const countCol2 = $('countCol2');
+            const countCol3 = $('countCol3');
+            const modeDesc = $('modeDesc');
+            const toast = $('toast');
+
+            // ---------- ENGINE ----------
+            function runConversion() {
+                const raw = inputText.value;
+                state.inputText = raw;
+                const mode = state.mode;
+                const comp = state.complexity;
+                let shawiResult = '';
+                let latinResult = '';
+                let isRTL = false;
+
+                if(mode === 'latin2shawi') {
+                    // input Latin -> Shawilang Latin + Shawibet
+                    let shawilang = '';
+                    if(comp === 'ngoko') {
+                        shawilang = applyNgoko(raw);
+                    } else if(comp === 'kromo') {
+                        shawilang = applyKromo(raw);
+                    } else { // kromo-ngalik
+                        shawilang = applyKromoNgalik(raw);
+                        isRTL = true;
+                    }
+                    latinResult = shawilang;
+                    shawiResult = encodeShawibet(shawilang);
+                } else {
+                    // shawi2latin: input Shawibet -> decode -> Shawilang? lalu ke Latin (Indonesia)
+                    // decode dulu ke Shawilang Latin
+                    const decoded = decodeShawibet(raw);
+                    // lalu terjemahkan balik? kita coba: transform per kata (inverse transform)
+                    // gunakan transformWord kebalikan? kita punya mapping simetris untuk b<->p dll, jadi transformWord(decoded) = original?
+                    // tapi tidak sempurna. kita lakukan transformWord per kata untuk membalik
+                    let original = decoded.split(/\b/).map(part => {
+                        if(/^[A-Za-z]+$/.test(part)) {
+                            // transformasi balik (gunakan mapping yang sama, simetris)
+                            return transformWord(part);
+                        }
+                        return part;
+                    }).join('');
+                    // lalu terapkan tingkat kerumitan? untuk shawi2latin kita tampilkan asli & hasil
+                    if(comp === 'ngoko') {
+                        // hasil latin = original (sudah transform)
+                        latinResult = original;
+                        shawiResult = raw; // tampilkan input shawibet
+                    } else if(comp === 'kromo') {
+                        // original dibalik kata
+                        const reversedWords = original.split(/\b/).map(part => {
+                            if(/^[A-Za-z]+$/.test(part)) return part.split('').reverse().join('');
+                            return part;
+                        }).join('');
+                        latinResult = reversedWords;
+                        shawiResult = raw;
+                    } else {
+                        // kromo-ngalik: reverse sentence
+                        const words = original.split(/\s+/);
+                        const reversed = words.map(w => w.split('').reverse().join('')).reverse().join(' ');
+                        latinResult = reversed;
+                        shawiResult = raw;
+                        isRTL = true;
+                    }
+                }
+
+                state.outputLatin = latinResult;
+                state.outputShawibet = shawiResult;
+                state.isRTL = isRTL;
+
+                // render
+                outputShawibet.value = shawiResult;
+                outputLatin.value = latinResult;
+                // RTL
+                outputShawibet.classList.toggle('rtl-text', isRTL && state.mode==='latin2shawi');
+                if(state.mode==='shawi2latin' && state.complexity==='kromo-ngalik') {
+                    outputShawibet.classList.add('rtl-text');
+                } else {
+                    outputShawibet.classList.remove('rtl-text');
+                }
+                // update labels
+                updateLabelsAndCounts();
+                updateModeDesc();
+            }
+
+            function updateLabelsAndCounts() {
+                const mode = state.mode;
+                const layout = state.layout;
+                const is3 = layout === 3;
+                col3.classList.toggle('hidden', !is3);
+                // label col1
+                if(mode==='latin2shawi') {
+                    labelCol1.textContent = 'Input Latin';
+                    labelCol2.textContent = 'Shawibet';
+                    labelCol3.textContent = 'Shawilang Latin';
+                } else {
+                    labelCol1.textContent = 'Input Shawibet';
+                    labelCol2.textContent = 'Hasil Latin (Shawilang)';
+                    labelCol3.textContent = 'Hasil Indonesia';
+                }
+                // counts
+                countCol1.textContent = inputText.value.length;
+                countCol2.textContent = outputShawibet.value.length;
+                countCol3.textContent = outputLatin.value.length;
+            }
+
+            function updateModeDesc() {
+                const comp = state.complexity;
+                const mode = state.mode;
+                let dir = 'LTR';
+                if(state.isRTL) dir = 'RTL (Shawibet)';
+                const compName = { 'ngoko':'Ngoko', 'kromo':'Kromo', 'kromo-ngalik':'Kromo Ngalik' }[comp];
+                const modeName = mode==='latin2shawi' ? 'Latin → Shawibet' : 'Shawibet → Latin';
+                modeDesc.textContent = `Mode: ${modeName} · ${compName} · ${dir}`;
+            }
+
+            // copy
+            function copyText(text, label) {
+                if(!text) { showToast('Tidak ada teks untuk disalin'); return; }
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast(`✓ ${label} disalin`);
+                }).catch(() => {
+                    // fallback
+                    const ta = document.createElement('textarea');
+                    ta.value = text;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    ta.remove();
+                    showToast(`✓ ${label} disalin`);
+                });
+            }
+
+            let toastTimer = null;
+            function showToast(msg) {
+                toast.textContent = msg;
+                toast.classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+            }
+
+            // clear
+            function clearAll() {
+                inputText.value = '';
+                outputShawibet.value = '';
+                outputLatin.value = '';
+                state.inputText = '';
+                state.outputLatin = '';
+                state.outputShawibet = '';
+                updateLabelsAndCounts();
+                runConversion();
+            }
+
+            // swap mode
+            function swapMode() {
+                const current = state.mode;
+                const newMode = current === 'latin2shawi' ? 'shawi2latin' : 'latin2shawi';
+                state.mode = newMode;
+                // update button active
+                document.querySelectorAll('#modeGroup button').forEach(b => {
+                    b.classList.toggle('active', b.dataset.mode === newMode);
+                });
+                // swap text: input <-> output?
+                const inputVal = inputText.value;
+                const shawiVal = outputShawibet.value;
+                const latinVal = outputLatin.value;
+                if(newMode === 'shawi2latin') {
+                    inputText.value = shawiVal || inputVal; // pindahkan shawibet ke input
+                } else {
+                    inputText.value = (latinVal || inputVal); 
+                }
+                runConversion();
+                updateLabelsAndCounts();
+            }
+
+            // update layout
+            function setLayout(cols) {
+                state.layout = cols;
+                const container = $('columnsContainer');
+                container.classList.remove('col-2','col-3');
+                container.classList.add(cols===2 ? 'col-2' : 'col-3');
+                document.querySelectorAll('#layoutGroup button').forEach(b => {
+                    b.classList.toggle('active', parseInt(b.dataset.layout) === cols);
+                });
+                updateLabelsAndCounts();
+                runConversion();
+            }
+
+            // theme
+            function toggleTheme() {
+                const html = document.documentElement;
+                const current = html.getAttribute('data-theme');
+                const next = current === 'dark' ? 'light' : 'dark';
+                html.setAttribute('data-theme', next);
+                localStorage.setItem('theme', next);
+                document.querySelector('#themeToggle').textContent = next === 'dark' ? '🌙 Dark' : '☀ Light';
+            }
+
+            // init theme
+            function initTheme() {
+                const stored = localStorage.getItem('theme');
+                if(stored) {
+                    document.documentElement.setAttribute('data-theme', stored);
+                    document.querySelector('#themeToggle').textContent = stored === 'dark' ? '🌙 Dark' : '☀ Light';
+                }
+            }
+
+            // event binding
+            function init() {
+                initTheme();
+                // set default input
+                inputText.value = 'buku itu baru';
+                // initial run
+                runConversion();
+
+                // listeners
+                inputText.addEventListener('input', () => {
+                    runConversion();
+                });
+
+                document.querySelectorAll('#modeGroup button').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        document.querySelectorAll('#modeGroup button').forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        state.mode = this.dataset.mode;
+                        // swap text jika perlu
+                        if(state.mode === 'shawi2latin') {
+                            // pindahkan shawibet ke input
+                            inputText.value = outputShawibet.value || state.inputText;
+                        } else {
+                            inputText.value = state.inputText;
+                        }
+                        runConversion();
+                    });
+                });
+
+                document.querySelectorAll('#layoutGroup button').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const cols = parseInt(this.dataset.layout);
+                        setLayout(cols);
+                    });
+                });
+
+                document.querySelectorAll('#complexityGroup button').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        document.querySelectorAll('#complexityGroup button').forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        state.complexity = this.dataset.complex;
+                        runConversion();
+                    });
+                });
+
+                document.querySelectorAll('.copy-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const target = this.dataset.target;
+                        let text = '';
+                        let label = '';
+                        if(target === 'col1') { text = inputText.value; label = 'Input'; }
+                        else if(target === 'col2') { text = outputShawibet.value; label = 'Shawibet'; }
+                        else if(target === 'col3') { text = outputLatin.value; label = 'Shawilang Latin'; }
+                        if(text) copyText(text, label);
+                        else showToast('Tidak ada teks');
+                    });
+                });
+
+                $('swapBtn').addEventListener('click', swapMode);
+                $('clearBtn').addEventListener('click', clearAll);
+                $('convertBtn').addEventListener('click', runConversion);
+                $('themeToggle').addEventListener('click', toggleTheme);
+
+                // tahun footer
+                $('year').textContent = new Date().getFullYear();
+
+                // set layout awal
+                setLayout(2);
+            }
+
+            // ready
+            if(document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+
+        })();
+    </script>
+</body>
+</html>
