@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>Shawilang – Shawibet Writer & Translator</title>
     <meta name="description" content="Tulis dan konversi Bahasa Indonesia ke Shawilang dan aksara Shawibet dengan mode Ngoko, Kromo, dan Kromo Ngalik.">
-    <link rel="canonical" href="/">
+    <link rel="canonical" href="https://wahyudi.github.io/shawilang/">
     <meta property="og:title" content="Shawilang – Shawibet Writer">
     <meta property="og:description" content="Konversi Bahasa Indonesia ke Shawilang & Shawibet. Mode Ngoko, Kromo, Kromo Ngalik. PWA.">
     <meta name="twitter:card" content="summary">
@@ -392,7 +392,6 @@
             "use strict";
 
             // ---------- SHAWILANG MAPPING ----------
-            // Mapping untuk transformasi level 1 & 2
             const CHAR_MAP = {
                 'b':'p', 'p':'b', 'c':'j', 'j':'c', 'd':'t', 't':'d',
                 'f':'v', 'v':'f', 'h':'ng', 'ng':'h', 'k':'g', 'g':'k',
@@ -401,7 +400,6 @@
             };
             const UNCHANGED = ['i','ny','sy','q','x'];
 
-            // Mapping level 3 (Kromo Ngalik)
             const CHAR_MAP_LEVEL3 = {
                 'b':'p', 'p':'b', 'c':'j', 'j':'c', 'd':'t', 't':'d',
                 'f':'v', 'v':'f', 'h':'ng', 'ng':'h', 'k':'g', 'g':'k',
@@ -409,23 +407,23 @@
             };
             const UNCHANGED_LEVEL3 = ['i','m','n','s','z','w','y','ny','sy','q','x'];
 
-            // Tokenizer untuk multi-char
+            // Tokenizer yang lebih baik untuk multi-char
             function tokenize(input) {
                 const tokens = [];
-                const special = ['ng','ny','sy'];
+                const special = ['ng', 'ny', 'sy'];
                 let i = 0;
-                while(i < input.length) {
-                    let match = null;
-                    if(i+1 < input.length) {
-                        const two = input.substr(i,2).toLowerCase();
-                        if(special.includes(two)) {
-                            match = two;
+                while (i < input.length) {
+                    let matched = false;
+                    // Coba match 2 karakter terlebih dahulu (longest match)
+                    if (i + 1 < input.length) {
+                        const two = input.substring(i, i + 2).toLowerCase();
+                        if (special.includes(two)) {
+                            tokens.push(two);
+                            i += 2;
+                            matched = true;
                         }
                     }
-                    if(match) {
-                        tokens.push(match);
-                        i += 2;
-                    } else {
+                    if (!matched) {
                         const ch = input[i].toLowerCase();
                         tokens.push(ch);
                         i++;
@@ -435,20 +433,18 @@
             }
 
             function transformWord(text, level) {
+                if (!text) return text;
                 const tokens = tokenize(text);
                 let result = '';
                 const map = level === 3 ? CHAR_MAP_LEVEL3 : CHAR_MAP;
                 const unchanged = level === 3 ? UNCHANGED_LEVEL3 : UNCHANGED;
-                for(let t of tokens) {
-                    if(unchanged.includes(t)) {
+                
+                for (let t of tokens) {
+                    if (unchanged.includes(t)) {
                         result += t;
-                        continue;
-                    }
-                    const mapped = map[t];
-                    if(mapped) {
-                        result += mapped;
                     } else {
-                        result += t;
+                        const mapped = map[t];
+                        result += mapped || t;
                     }
                 }
                 return result;
@@ -467,25 +463,27 @@
             function encodeShawibet(latinText) {
                 let result = '';
                 let i = 0;
-                while(i < latinText.length) {
+                while (i < latinText.length) {
                     let matched = false;
-                    for(let len=2; len>=1; len--) {
-                        if(i+len <= latinText.length) {
-                            const sub = latinText.substr(i,len);
-                            const lower = sub.toLowerCase();
-                            if(SHAWI_MAP[lower]) {
-                                result += SHAWI_MAP[lower];
-                                i += len;
-                                matched = true;
-                                break;
-                            }
+                    // Coba match 2 karakter
+                    if (i + 1 < latinText.length) {
+                        const two = latinText.substring(i, i + 2).toLowerCase();
+                        if (SHAWI_MAP[two]) {
+                            result += SHAWI_MAP[two];
+                            i += 2;
+                            matched = true;
                         }
                     }
-                    if(!matched) {
+                    if (!matched) {
                         const ch = latinText[i];
-                        if(ch === ' ') result += ' ';
-                        else if(/[.,!?;:"'()\-]/.test(ch)) result += ch;
-                        else result += ch;
+                        if (ch === ' ') {
+                            result += ' ';
+                        } else if (/[.,!?;:"'()\-]/.test(ch)) {
+                            result += ch;
+                        } else {
+                            const lower = ch.toLowerCase();
+                            result += SHAWI_MAP[lower] || ch;
+                        }
                         i++;
                     }
                 }
@@ -495,12 +493,12 @@
             function decodeShawibet(shawiText) {
                 let result = '';
                 let i = 0;
-                while(i < shawiText.length) {
+                while (i < shawiText.length) {
                     let found = false;
-                    for(let len=3; len>=1; len--) {
-                        if(i+len <= shawiText.length) {
-                            const sub = shawiText.substr(i,len);
-                            if(SHAWI_DECODE[sub]) {
+                    for (let len = 3; len >= 1; len--) {
+                        if (i + len <= shawiText.length) {
+                            const sub = shawiText.substring(i, i + len);
+                            if (SHAWI_DECODE[sub]) {
                                 result += SHAWI_DECODE[sub];
                                 i += len;
                                 found = true;
@@ -508,40 +506,50 @@
                             }
                         }
                     }
-                    if(!found) {
+                    if (!found) {
                         const ch = shawiText[i];
-                        if(ch === ' ' || /[.,!?;:"'()\-]/.test(ch)) result += ch;
-                        else result += ch;
+                        if (ch === ' ' || /[.,!?;:"'()\-]/.test(ch)) {
+                            result += ch;
+                        } else {
+                            result += ch;
+                        }
                         i++;
                     }
                 }
                 return result;
             }
 
-            // Fungsi untuk memproses teks per baris/paragraf
+            // Fungsi untuk memproses teks per baris
             function processParagraph(text, processor) {
+                if (!text) return '';
                 const lines = text.split('\n');
                 const processedLines = lines.map(line => {
-                    if(line.trim() === '') return line;
+                    if (line.trim() === '') return line;
                     return processor(line);
                 });
                 return processedLines.join('\n');
             }
 
-            // Pipeline untuk Ngoko dan Kromo
+            // Pipeline untuk Ngoko
             function applyNgoko(text) {
                 return processParagraph(text, (line) => {
-                    return line.split(/\b/).map(part => {
-                        if(/^[A-Za-z]+$/.test(part)) return transformWord(part, 1);
+                    // Split berdasarkan batas kata (termasuk spasi dan tanda baca)
+                    const parts = line.split(/(\s+|[.,!?;:"'()\-])/);
+                    return parts.map(part => {
+                        if (/^[A-Za-z]+$/.test(part)) {
+                            return transformWord(part, 1);
+                        }
                         return part;
                     }).join('');
                 });
             }
 
+            // Pipeline untuk Kromo
             function applyKromo(text) {
                 return processParagraph(text, (line) => {
-                    return line.split(/\b/).map(part => {
-                        if(/^[A-Za-z]+$/.test(part)) {
+                    const parts = line.split(/(\s+|[.,!?;:"'()\-])/);
+                    return parts.map(part => {
+                        if (/^[A-Za-z]+$/.test(part)) {
                             const tr = transformWord(part, 1);
                             return tr.split('').reverse().join('');
                         }
@@ -550,48 +558,48 @@
                 });
             }
 
-            // Kromo Ngalik dengan penanganan tanda baca yang benar
+            // Pipeline untuk Kromo Ngalik
             function applyKromoNgalik(text) {
                 return processParagraph(text, (line) => {
-                    if(line.trim() === '') return line;
+                    if (line.trim() === '') return line;
                     
-                    // Pisahkan kata dan tanda baca
+                    // Split menjadi kata dan tanda baca
                     const parts = [];
                     let current = '';
-                    for(let i = 0; i < line.length; i++) {
+                    for (let i = 0; i < line.length; i++) {
                         const ch = line[i];
-                        if(/[a-zA-Z]/.test(ch)) {
+                        if (/[a-zA-Z]/.test(ch)) {
                             current += ch;
                         } else {
-                            if(current) {
+                            if (current) {
                                 parts.push({ type: 'word', value: current });
                                 current = '';
                             }
                             parts.push({ type: 'punct', value: ch });
                         }
                     }
-                    if(current) {
+                    if (current) {
                         parts.push({ type: 'word', value: current });
                     }
                     
                     // Kumpulkan tanda baca di awal
                     const leadingPuncts = [];
                     let idx = 0;
-                    while(idx < parts.length && parts[idx].type === 'punct') {
+                    while (idx < parts.length && parts[idx].type === 'punct') {
                         leadingPuncts.push(parts[idx].value);
                         idx++;
                     }
                     
                     // Kumpulkan kata-kata
                     const words = [];
-                    while(idx < parts.length && parts[idx].type === 'word') {
+                    while (idx < parts.length && parts[idx].type === 'word') {
                         words.push(parts[idx].value);
                         idx++;
                     }
                     
                     // Kumpulkan tanda baca di akhir
                     const trailingPuncts = [];
-                    while(idx < parts.length && parts[idx].type === 'punct') {
+                    while (idx < parts.length && parts[idx].type === 'punct') {
                         trailingPuncts.push(parts[idx].value);
                         idx++;
                     }
@@ -607,14 +615,14 @@
                     
                     // Gabungkan kembali
                     let result = '';
-                    for(let p of leadingPuncts) {
+                    for (let p of leadingPuncts) {
                         result += p;
                     }
-                    for(let i = 0; i < reversedWords.length; i++) {
-                        if(i > 0) result += ' ';
+                    for (let i = 0; i < reversedWords.length; i++) {
+                        if (i > 0) result += ' ';
                         result += reversedWords[i];
                     }
-                    for(let p of trailingPuncts) {
+                    for (let p of trailingPuncts) {
                         result += p;
                     }
                     
@@ -660,11 +668,11 @@
                 let latinResult = '';
                 let isRTL = false;
 
-                if(mode === 'latin2shawi') {
+                if (mode === 'latin2shawi') {
                     let shawilang = '';
-                    if(comp === 'ngoko') {
+                    if (comp === 'ngoko') {
                         shawilang = applyNgoko(raw);
-                    } else if(comp === 'kromo') {
+                    } else if (comp === 'kromo') {
                         shawilang = applyKromo(raw);
                     } else {
                         shawilang = applyKromoNgalik(raw);
@@ -675,22 +683,26 @@
                 } else {
                     const decoded = decodeShawibet(raw);
                     let original = decoded.split(/\b/).map(part => {
-                        if(/^[A-Za-z]+$/.test(part)) {
+                        if (/^[A-Za-z]+$/.test(part)) {
                             return transformWord(part, 1);
                         }
                         return part;
                     }).join('');
-                    if(comp === 'ngoko') {
+                    
+                    if (comp === 'ngoko') {
                         latinResult = original;
                         shawiResult = raw;
-                    } else if(comp === 'kromo') {
+                    } else if (comp === 'kromo') {
                         const reversedWords = original.split(/\b/).map(part => {
-                            if(/^[A-Za-z]+$/.test(part)) return part.split('').reverse().join('');
+                            if (/^[A-Za-z]+$/.test(part)) {
+                                return part.split('').reverse().join('');
+                            }
                             return part;
                         }).join('');
                         latinResult = reversedWords;
                         shawiResult = raw;
                     } else {
+                        // Kromo Ngalik reverse mode
                         const words = original.split(/\s+/);
                         const reversed = words.map(w => w.split('').reverse().join('')).reverse().join(' ');
                         latinResult = reversed;
@@ -706,8 +718,9 @@
                 outputShawibet.value = shawiResult;
                 outputLatin.value = latinResult;
 
-                outputShawibet.classList.toggle('rtl-text', isRTL && state.mode==='latin2shawi');
-                if(state.mode==='shawi2latin' && state.complexity==='kromo-ngalik') {
+                // RTL handling
+                outputShawibet.classList.toggle('rtl-text', isRTL && state.mode === 'latin2shawi');
+                if (state.mode === 'shawi2latin' && state.complexity === 'kromo-ngalik') {
                     outputShawibet.classList.add('rtl-text');
                 } else {
                     outputShawibet.classList.remove('rtl-text');
@@ -722,7 +735,7 @@
                 const layout = state.layout;
                 const is3 = layout === 3;
                 col3.classList.toggle('hidden', !is3);
-                if(mode==='latin2shawi') {
+                if (mode === 'latin2shawi') {
                     labelCol1.textContent = 'Input Latin';
                     labelCol2.textContent = 'Shawibet';
                     labelCol3.textContent = 'Shawilang Latin';
@@ -740,15 +753,15 @@
                 const comp = state.complexity;
                 const mode = state.mode;
                 let dir = 'LTR';
-                if(state.isRTL) dir = 'RTL (Shawibet)';
+                if (state.isRTL) dir = 'RTL (Shawibet)';
                 const compName = { 'ngoko':'Ngoko', 'kromo':'Kromo', 'kromo-ngalik':'Kromo Ngalik' }[comp];
-                const modeName = mode==='latin2shawi' ? 'Latin → Shawibet' : 'Shawibet → Latin';
+                const modeName = mode === 'latin2shawi' ? 'Latin → Shawibet' : 'Shawibet → Latin';
                 modeDesc.textContent = `Mode: ${modeName} · ${compName} · ${dir}`;
             }
 
             // copy
             function copyText(text, label) {
-                if(!text) { showToast('Tidak ada teks untuk disalin'); return; }
+                if (!text) { showToast('Tidak ada teks untuk disalin'); return; }
                 navigator.clipboard.writeText(text).then(() => {
                     showToast(`✓ ${label} disalin`);
                 }).catch(() => {
@@ -791,7 +804,7 @@
                 const inputVal = inputText.value;
                 const shawiVal = outputShawibet.value;
                 const latinVal = outputLatin.value;
-                if(newMode === 'shawi2latin') {
+                if (newMode === 'shawi2latin') {
                     inputText.value = shawiVal || inputVal;
                 } else {
                     inputText.value = (latinVal || inputVal);
@@ -803,8 +816,8 @@
             function setLayout(cols) {
                 state.layout = cols;
                 const container = $('columnsContainer');
-                container.classList.remove('col-2','col-3');
-                container.classList.add(cols===2 ? 'col-2' : 'col-3');
+                container.classList.remove('col-2', 'col-3');
+                container.classList.add(cols === 2 ? 'col-2' : 'col-3');
                 document.querySelectorAll('#layoutGroup button').forEach(b => {
                     b.classList.toggle('active', parseInt(b.dataset.layout) === cols);
                 });
@@ -823,7 +836,7 @@
 
             function initTheme() {
                 const stored = localStorage.getItem('theme');
-                if(stored) {
+                if (stored) {
                     document.documentElement.setAttribute('data-theme', stored);
                     document.querySelector('#themeToggle').textContent = stored === 'dark' ? '🌙 Dark' : '☀ Light';
                 }
@@ -831,6 +844,7 @@
 
             function init() {
                 initTheme();
+                // Set default input dengan multi-baris
                 inputText.value = 'buku itu baru\nNgapain kamu ke sini?';
                 runConversion();
 
@@ -841,7 +855,7 @@
                         document.querySelectorAll('#modeGroup button').forEach(b => b.classList.remove('active'));
                         this.classList.add('active');
                         state.mode = this.dataset.mode;
-                        if(state.mode === 'shawi2latin') {
+                        if (state.mode === 'shawi2latin') {
                             inputText.value = outputShawibet.value || state.inputText;
                         } else {
                             inputText.value = state.inputText;
@@ -869,10 +883,10 @@
                     btn.addEventListener('click', function() {
                         const target = this.dataset.target;
                         let text = '', label = '';
-                        if(target === 'col1') { text = inputText.value; label = 'Input'; }
-                        else if(target === 'col2') { text = outputShawibet.value; label = 'Shawibet'; }
-                        else if(target === 'col3') { text = outputLatin.value; label = 'Shawilang Latin'; }
-                        if(text) copyText(text, label);
+                        if (target === 'col1') { text = inputText.value; label = 'Input'; }
+                        else if (target === 'col2') { text = outputShawibet.value; label = 'Shawibet'; }
+                        else if (target === 'col3') { text = outputLatin.value; label = 'Shawilang Latin'; }
+                        if (text) copyText(text, label);
                         else showToast('Tidak ada teks');
                     });
                 });
@@ -886,7 +900,7 @@
                 setLayout(2);
             }
 
-            if(document.readyState === 'loading') {
+            if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', init);
             } else {
                 init();
