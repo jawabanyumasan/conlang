@@ -391,25 +391,25 @@
         (function(){
             "use strict";
 
-            // ---------- SHAWILANG MAPPING ----------
+            // ---------- SHAWILANG MAPPING (UPDATED) ----------
             // Mapping untuk transformasi level 1 & 2
             const CHAR_MAP = {
-                'b':'p', 'p':'p', 'c':'j', 'j':'c', 'd':'t', 't':'d',
+                'b':'p', 'p':'b', 'c':'j', 'j':'c', 'd':'t', 't':'d',
                 'f':'v', 'v':'f', 'h':'ng', 'ng':'h', 'k':'g', 'g':'k',
                 'l':'r', 'r':'l', 'm':'n', 'n':'m', 's':'z', 'z':'s',
                 'w':'y', 'y':'w', 'a':'e', 'e':'a', 'u':'o', 'o':'u'
             };
             const UNCHANGED = ['i','ny','sy','q','x'];
 
-            // Mapping level 3 (tanpa m,n,s,w,y,z)
+            // Mapping level 3 (Kromo Ngalik)
             const CHAR_MAP_LEVEL3 = {
-                'b':'p', 'p':'p', 'c':'j', 'j':'c', 'd':'t', 't':'d',
+                'b':'p', 'p':'b', 'c':'j', 'j':'c', 'd':'t', 't':'d',
                 'f':'v', 'v':'f', 'h':'ng', 'ng':'h', 'k':'g', 'g':'k',
                 'l':'r', 'r':'l', 'a':'e', 'e':'a', 'u':'o', 'o':'u'
             };
-            const UNCHANGED_LEVEL3 = ['i','m','n','s','w','y','z','ny','sy','q','x'];
+            const UNCHANGED_LEVEL3 = ['i','m','n','s','z','w','y','ny','sy','q','x'];
 
-            // Tokenizer
+            // Tokenizer untuk multi-char
             function tokenize(input) {
                 const tokens = [];
                 const special = ['ng','ny','sy'];
@@ -454,7 +454,7 @@
                 return result;
             }
 
-            // Shawibet encoding
+            // Shawibet encoding (UPDATED)
             const SHAWI_MAP = {
                 'p':'𐑐','b':'𐑚','t':'𐑑','d':'𐑛','k':'𐑒','g':'𐑜',
                 'v':'𐑓','f':'𐑝','s':'𐑕','z':'𐑟','c':'𐑗','j':'𐑡',
@@ -562,14 +562,27 @@
             function applyKromoNgalik(text) {
                 const parts = splitWordsAndPunctuation(text);
                 const words = [];
-                const puncts = [];
+                const leadingPuncts = [];
+                const trailingPuncts = [];
                 
-                for(let part of parts) {
-                    if(part.type === 'word') {
-                        words.push(part.value);
-                    } else {
-                        puncts.push(part.value);
-                    }
+                // Kumpulkan tanda baca di awal
+                let i = 0;
+                while(i < parts.length && parts[i].type === 'punct') {
+                    leadingPuncts.push(parts[i].value);
+                    i++;
+                }
+                
+                // Kumpulkan kata-kata
+                let j = i;
+                while(j < parts.length && parts[j].type === 'word') {
+                    words.push(parts[j].value);
+                    j++;
+                }
+                
+                // Kumpulkan tanda baca di akhir
+                while(j < parts.length && parts[j].type === 'punct') {
+                    trailingPuncts.push(parts[j].value);
+                    j++;
                 }
                 
                 // Transformasi setiap kata
@@ -581,54 +594,15 @@
                 // Balik urutan kata
                 const reversedWords = transformed.reverse();
                 
-                // Gabungkan kembali dengan tanda baca di posisi yang benar
+                // Gabungkan kembali
                 let result = '';
-                let wordIndex = 0;
-                let punctIndex = 0;
-                
-                // Cari posisi tanda baca di akhir
-                let trailingPuncts = [];
-                let leadingPuncts = [];
-                let hasTrailing = false;
-                
-                // Kumpulkan tanda baca di awal dan akhir
-                for(let part of parts) {
-                    if(part.type === 'punct' && wordIndex === 0 && punctIndex === 0) {
-                        leadingPuncts.push(part.value);
-                        punctIndex++;
-                    } else {
-                        break;
-                    }
-                }
-                
-                // Reset
-                wordIndex = 0;
-                punctIndex = 0;
-                
-                // Kumpulkan tanda baca di akhir
-                let tempPuncts = [];
-                for(let i = parts.length - 1; i >= 0; i--) {
-                    if(parts[i].type === 'punct') {
-                        tempPuncts.unshift(parts[i].value);
-                    } else {
-                        break;
-                    }
-                }
-                trailingPuncts = tempPuncts;
-                
-                // Bangun hasil
-                // Tanda baca di awal tetap di awal
                 for(let p of leadingPuncts) {
                     result += p;
                 }
-                
-                // Kata-kata yang sudah dibalik urutannya
                 for(let i = 0; i < reversedWords.length; i++) {
                     if(i > 0) result += ' ';
                     result += reversedWords[i];
                 }
-                
-                // Tanda baca di akhir tetap di akhir
                 for(let p of trailingPuncts) {
                     result += p;
                 }
