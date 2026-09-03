@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Shawilang Conlang Builder</title>
+    <title>Shawilang – Shawibet Writer & Translator</title>
     <meta name="description" content="Tulis dan konversi Bahasa Indonesia ke Shawilang dan aksara Shawibet dengan mode Ngoko, Kromo, dan Kromo Ngalik.">
-    <link rel="canonical" href="https://jawabanyumasan.github.io/conlang/shawilang/">
-    <meta property="og:title" content="Shawilang Conlang Builder">
+    <link rel="canonical" href="/">
+    <meta property="og:title" content="Shawilang – Shawibet Writer">
     <meta property="og:description" content="Konversi Bahasa Indonesia ke Shawilang & Shawibet. Mode Ngoko, Kromo, Kromo Ngalik. PWA.">
     <meta name="twitter:card" content="summary">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>𐑖</text></svg>">
@@ -298,7 +298,7 @@
     <header>
         <div class="brand">
             <h1>SHAWILANG</h1>
-            <small>Shawilang Conlang Builder</small>
+            <small>Shawilang &amp; Shawibet Writer</small>
         </div>
         <div class="header-actions">
             <button class="theme-toggle" id="themeToggle" aria-label="Toggle tema">🌙 Dark</button>
@@ -391,7 +391,7 @@
         (function(){
             "use strict";
 
-            // ---------- SHAWILANG MAPPING (UPDATED) ----------
+            // ---------- SHAWILANG MAPPING ----------
             // Mapping untuk transformasi level 1 & 2
             const CHAR_MAP = {
                 'b':'p', 'p':'b', 'c':'j', 'j':'c', 'd':'t', 't':'d',
@@ -454,7 +454,7 @@
                 return result;
             }
 
-            // Shawibet encoding (UPDATED)
+            // Shawibet encoding
             const SHAWI_MAP = {
                 'p':'𐑐','b':'𐑚','t':'𐑑','d':'𐑛','k':'𐑒','g':'𐑜',
                 'v':'𐑓','f':'𐑝','s':'𐑕','z':'𐑟','c':'𐑗','j':'𐑡',
@@ -518,96 +518,108 @@
                 return result;
             }
 
-            // Fungsi untuk memisahkan kata dan tanda baca
-            function splitWordsAndPunctuation(text) {
-                const result = [];
-                let current = '';
-                for(let i = 0; i < text.length; i++) {
-                    const ch = text[i];
-                    if(/[a-zA-Z]/.test(ch)) {
-                        current += ch;
-                    } else {
-                        if(current) {
-                            result.push({ type: 'word', value: current });
-                            current = '';
-                        }
-                        result.push({ type: 'punct', value: ch });
-                    }
-                }
-                if(current) {
-                    result.push({ type: 'word', value: current });
-                }
-                return result;
+            // Fungsi untuk memproses teks per baris/paragraf
+            function processParagraph(text, processor) {
+                const lines = text.split('\n');
+                const processedLines = lines.map(line => {
+                    if(line.trim() === '') return line;
+                    return processor(line);
+                });
+                return processedLines.join('\n');
             }
 
             // Pipeline untuk Ngoko dan Kromo
             function applyNgoko(text) {
-                return text.split(/\b/).map(part => {
-                    if(/^[A-Za-z]+$/.test(part)) return transformWord(part, 1);
-                    return part;
-                }).join('');
+                return processParagraph(text, (line) => {
+                    return line.split(/\b/).map(part => {
+                        if(/^[A-Za-z]+$/.test(part)) return transformWord(part, 1);
+                        return part;
+                    }).join('');
+                });
             }
 
             function applyKromo(text) {
-                return text.split(/\b/).map(part => {
-                    if(/^[A-Za-z]+$/.test(part)) {
-                        const tr = transformWord(part, 1);
-                        return tr.split('').reverse().join('');
-                    }
-                    return part;
-                }).join('');
+                return processParagraph(text, (line) => {
+                    return line.split(/\b/).map(part => {
+                        if(/^[A-Za-z]+$/.test(part)) {
+                            const tr = transformWord(part, 1);
+                            return tr.split('').reverse().join('');
+                        }
+                        return part;
+                    }).join('');
+                });
             }
 
             // Kromo Ngalik dengan penanganan tanda baca yang benar
             function applyKromoNgalik(text) {
-                const parts = splitWordsAndPunctuation(text);
-                const words = [];
-                const leadingPuncts = [];
-                const trailingPuncts = [];
-                
-                // Kumpulkan tanda baca di awal
-                let i = 0;
-                while(i < parts.length && parts[i].type === 'punct') {
-                    leadingPuncts.push(parts[i].value);
-                    i++;
-                }
-                
-                // Kumpulkan kata-kata
-                let j = i;
-                while(j < parts.length && parts[j].type === 'word') {
-                    words.push(parts[j].value);
-                    j++;
-                }
-                
-                // Kumpulkan tanda baca di akhir
-                while(j < parts.length && parts[j].type === 'punct') {
-                    trailingPuncts.push(parts[j].value);
-                    j++;
-                }
-                
-                // Transformasi setiap kata
-                const transformed = words.map(w => {
-                    const tr = transformWord(w, 3);
-                    return tr.split('').reverse().join('');
+                return processParagraph(text, (line) => {
+                    if(line.trim() === '') return line;
+                    
+                    // Pisahkan kata dan tanda baca
+                    const parts = [];
+                    let current = '';
+                    for(let i = 0; i < line.length; i++) {
+                        const ch = line[i];
+                        if(/[a-zA-Z]/.test(ch)) {
+                            current += ch;
+                        } else {
+                            if(current) {
+                                parts.push({ type: 'word', value: current });
+                                current = '';
+                            }
+                            parts.push({ type: 'punct', value: ch });
+                        }
+                    }
+                    if(current) {
+                        parts.push({ type: 'word', value: current });
+                    }
+                    
+                    // Kumpulkan tanda baca di awal
+                    const leadingPuncts = [];
+                    let idx = 0;
+                    while(idx < parts.length && parts[idx].type === 'punct') {
+                        leadingPuncts.push(parts[idx].value);
+                        idx++;
+                    }
+                    
+                    // Kumpulkan kata-kata
+                    const words = [];
+                    while(idx < parts.length && parts[idx].type === 'word') {
+                        words.push(parts[idx].value);
+                        idx++;
+                    }
+                    
+                    // Kumpulkan tanda baca di akhir
+                    const trailingPuncts = [];
+                    while(idx < parts.length && parts[idx].type === 'punct') {
+                        trailingPuncts.push(parts[idx].value);
+                        idx++;
+                    }
+                    
+                    // Transformasi setiap kata (level 3)
+                    const transformed = words.map(w => {
+                        const tr = transformWord(w, 3);
+                        return tr.split('').reverse().join('');
+                    });
+                    
+                    // Balik urutan kata
+                    const reversedWords = transformed.reverse();
+                    
+                    // Gabungkan kembali
+                    let result = '';
+                    for(let p of leadingPuncts) {
+                        result += p;
+                    }
+                    for(let i = 0; i < reversedWords.length; i++) {
+                        if(i > 0) result += ' ';
+                        result += reversedWords[i];
+                    }
+                    for(let p of trailingPuncts) {
+                        result += p;
+                    }
+                    
+                    return result;
                 });
-                
-                // Balik urutan kata
-                const reversedWords = transformed.reverse();
-                
-                // Gabungkan kembali
-                let result = '';
-                for(let p of leadingPuncts) {
-                    result += p;
-                }
-                for(let i = 0; i < reversedWords.length; i++) {
-                    if(i > 0) result += ' ';
-                    result += reversedWords[i];
-                }
-                for(let p of trailingPuncts) {
-                    result += p;
-                }
-                
-                return result;
             }
 
             // ---------- APP STATE ----------
@@ -819,7 +831,7 @@
 
             function init() {
                 initTheme();
-                inputText.value = 'buku itu baru';
+                inputText.value = 'buku itu baru\nNgapain kamu ke sini?';
                 runConversion();
 
                 inputText.addEventListener('input', runConversion);
