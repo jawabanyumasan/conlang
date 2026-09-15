@@ -1,5 +1,5 @@
 /**
- * Jawalik App - Engine & Logic (With Brackets Bypass Feature)
+ * Jawalik App - Engine & Logic (Bracket Bypass Without Brackets Output)
  * Author: Wahyudi
  */
 
@@ -93,22 +93,23 @@ function translateSegment(input) {
 
 /**
  * Fungsi Utama Transliterasi Jawalik
- * Mendukung fitur bypass teks dalam kurung siku [...]
+ * Teks di dalam [...] tidak ditransliterasi dan tanda [...] dihilangkan dari hasil.
  */
 function convertJawalik(input) {
   if (!input) return "";
 
   // Regex memisahkan teks biasa dan teks di dalam kurung siku [...]
-  // Contoh pembagian: "Halo [Jawalik App] dunia" => ["Halo ", "[Jawalik App]", " dunia"]
+  // Contoh: "Aplikasi [Jawa] hebat" => ["Aplikasi ", "[Jawa]", " hebat"]
   const regex = /(\[[^\]]*\])/g;
   const parts = input.split(regex);
 
   return parts.map(part => {
-    // Jika bagian diawali '[' dan diakhiri ']', jangan transliterasi isinya
+    // Jika bagian diawali '[' dan diakhiri ']'
     if (part.startsWith('[') && part.endsWith(']')) {
-      return part;
+      // Ambil teks di dalam kurung tanpa tanda '[' dan ']'
+      return part.slice(1, -1);
     }
-    // Jika teks biasa, transliterasikan
+    // Jika teks biasa, lakukan transliterasi
     return translateSegment(part);
   }).join('');
 }
