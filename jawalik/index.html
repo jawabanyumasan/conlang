@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Jawalik App - Aplikasi penerjemah dan transliterasi dua arah antara Latin dan Jawalik secara instan dan offline.">
+  <meta name="theme-color" content="#4f46e5">
+  <title>Jawalik App — Latin ↔ Jawalik</title>
+
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="icons/icon-192.svg">
+  <link rel="apple-touch-icon" href="icons/icon-192.svg">
+</head>
+<body>
+  <div class="container">
+    <header class="app-header">
+      <h1>Jawalik App</h1>
+      <p class="subtitle">Aplikasi Transliterasi Latin ↔ Jawalik</p>
+      <button id="pwaInstallBtn" class="btn btn-install hidden" aria-label="Instal Aplikasi di HP">
+        📱 Instal di HP
+      </button>
+    </header>
+
+    <main class="main-content">
+      <div class="editor-grid">
+        <!-- Input Column -->
+        <div class="editor-card">
+          <div class="card-header">
+            <h2 id="inputLabel">Input (Latin)</h2>
+            <div class="counter-badge">
+              <span id="charCount">Karakter: 0</span> | <span id="wordCount">Kata: 0</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <textarea id="inputText" placeholder="Tulis atau tempel teks di sini..." spellcheck="false"></textarea>
+          </div>
+          <div class="card-footer">
+            <button id="copyInputBtn" class="btn btn-secondary">Copy Input</button>
+            <button id="clearBtn" class="btn btn-danger">Bersihkan</button>
+          </div>
+        </div>
+
+        <!-- Direction & Utility Controls (Desktop Middle / Mobile Switch) -->
+        <div class="controls-bar">
+          <button id="swapDirectionBtn" class="btn btn-accent" title="Tukar Arah Transliterasi">
+            ⇄ Tukar Arah
+          </button>
+          <button id="swapContentBtn" class="btn btn-outline" title="Tukar Isi Teks Input & Hasil">
+            ⇅ Tukar Isi Teks
+          </button>
+        </div>
+
+        <!-- Output Column -->
+        <div class="editor-card">
+          <div class="card-header">
+            <h2 id="outputLabel">Hasil (Jawalik)</h2>
+          </div>
+          <div class="card-body">
+            <textarea id="outputText" readonly placeholder="Hasil konversi akan muncul di sini..."></textarea>
+          </div>
+          <div class="card-footer">
+            <button id="copyOutputBtn" class="btn btn-primary">Copy Hasil</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="app-footer">
+      <p>© <span id="year"></span> Jawalik App — Created By Wahyudi</p>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
